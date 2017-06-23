@@ -1,61 +1,92 @@
 //BUDGET CONTROLLER
-var budgetController = (function(){
-	var Expense = function(id,description,value){
-this.id = id;
-this.description = description;
-this.value = value; 
-	};
-	var Income = function(id,description,value){
-this.id = id;
-this.description = description;
-this.value = value; 
-	};
-	var calculateTotal = function(type)
-	{var sum = 0;
-		data.allItems[type].forEach(function(cur){sum += cur.value;});
-		data.totals[type] = sum;};
-	var data = {
-		allItems:{exp:[],
-			inc:[]},
-		totals:{exp:[],
-			inc:[]},
-			budget:0,
-			percentage: -1
-	};
-	return{addItem: function(type,des,val){
-		var newItem,ID;
-		//Create new ID
-		if(data.allItems[type].length > 0)
-			{ID=data.allItems[type][data.allItems[type].length-1].id + 1;}
-		else{ID = 0;}
-		
-		//Create new item based on "inc" or "exp" type
-		if(type === "exp")
-			{newItem = new Expense(ID,des,val);}
-		else if(type === "inc"){newItem = new Income(ID,des,val);}
-		//Push it into our Data Structure
-		data.allItems[type].push(newItem);
-		//Return the new Element
-		return newItem;
-		calculateBudget:function(){
-		//Calculate total income and expenses
-		calculateTotal("exp");
-		calculateTotal("inc");
-		//calculate the budget:income-expenses
-		data.budget = data.totals.inc - data.totals.exp;
-		//calculate the percentage of income that we spent
-		data.percentage = Math.round((data.totals.exp / data.totals.inc) * 100);
-	},
-	getBudget: function(){
-		return{
-			budget: data.budget,
-			totalInc: data.totals.inc,
-			TotalExp: data.totals.exp,
-			percentage: data.percentage
-
-		};},	
-	},testing:function(){console.log(data);}
-};
+var budgetController = (function () {
+    // each new item needs description and a value + distinguish by #id income vs. expense
+    // create a function constructor for income and expense types
+    var Expense = function (id, description, value) {
+        this.id = id;
+        this.description = description;
+        this.value = value;
+        this.percentage = -1;
+    };
+    var Income = function (id, description, value) {
+        this.id = id;
+        this.description = description;
+        this.value = value;
+    };
+    var calculateTotal = function(type) {
+        var sum = 0;
+        // add all values in the array depending on if it's 'exp' or 'inc'
+        data.allItems[type].forEach(function(currentElement){
+            sum += currentElement.value;
+        });
+        // store the totals in the data object
+        data.totals[type] = sum;
+    };
+    var data = {
+        allItems: {
+            exp: [],
+            inc: []
+        },
+        totals: {
+            exp: 0,
+            inc: 0
+        },
+        budget: 0,
+        percentage: -1 // because evaluated as non-existent
+    };
+    // create public method to allow other modules to add new items to the data structure
+    return {
+        addItem: function (type, desc, val) {
+            var newItem, ID;
+            // assign a unique id to each new expense or income item
+            // ID = last ID + 1
+            // create new ID
+            if (data.allItems[type].length > 0) {
+                ID = data.allItems[type][data.allItems[type].length - 1].id + 1;
+            } else {
+                ID = 0;
+            }
+            // console.log('The new ID for this item is: ' + ID);
+            // create new item based on 'inc' or 'exp' type
+            if (type === "exp") {
+                newItem = new Expense(ID, desc, val);
+            } else if (type === "inc") {
+                newItem = new Income(ID, desc, val);
+            }
+            // add new exp or inc to the end of the allItems.exp or allItems.inc array
+            data.allItems[type].push(newItem);
+            // return the new item
+            return newItem;
+        },
+        calculateBudget: function() {
+            // calculate total income and expenses
+            calculateTotal('exp');
+            calculateTotal('inc');
+            // calculate budget: income - expenses
+            data.budget = data.totals.inc - data.totals.exp;
+            // calculate percentage of income that has already been spent
+            if (data.totals.inc > 0){
+                // if income > 0, then calculate the percent expenses
+                data.percentage = Math.round( (data.totals.exp / data.totals.inc) * 100 );
+            } else {
+                // display nothing
+                data.percentage = -1;
+            }
+        },
+        getBudget: function(){
+            // this method will just return the budget items
+            return {
+                budget: data.budget,
+                totalInc: data.totals.inc,
+                totalExp: data.totals.exp,
+                percentage: data.percentage
+            }
+        },
+        // this method is just for testing purposes
+        testing: function () {
+            console.log(data);
+        }
+    }
 })();
 
 //UI CONTROLLER
@@ -67,7 +98,7 @@ var UIController=(function()
 		inputBtn:'.add__btn',
 		incomeContainer:'.income__list',
 		expensesContainer:'.expenses__list'
-	}; 
+	};
 		return{getInput:function()
 		{return{type:document.querySelector(DOMstrings.inputType).value,
 		description:document.querySelector(DOMstrings.inputDescription).value,
@@ -106,7 +137,7 @@ var UIController=(function()
 })();
 //GLOBAL APP CONTROLLER
 var controller=(function(budgetCtrl,UICtrl)
-	
+
 	{setupEventListeners = function(){
 		var DOM = UICtrl.getDOMstrings();
 		document.querySelector(DOM.inputBtn).addEventListener('click',ctrlAddItem);
@@ -136,11 +167,11 @@ var controller=(function(budgetCtrl,UICtrl)
 			//4 Clear the fields
 			UICtrl.clearFields();
 			//5.calculate and update budget
-			updateBudget(); 
+			updateBudget();
 			}
 			}
 		return{init: function(){console.log("Application has started.")
-		setupEventListeners();}};	
+		setupEventListeners();}};
 		}
 	)(budgetController,UIController);
 	controller.init();
